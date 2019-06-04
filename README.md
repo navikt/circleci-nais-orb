@@ -23,6 +23,7 @@ workflow:
     jobs:
       - nais/deploy:
           context: NAIS deployment
+          repo: navikt/example-repo
           image: navikt/example-image
           github-app-id: 1337
           nais-template: nais.yaml
@@ -46,6 +47,10 @@ Example: ./encrypt.sh ../../path-to-file-with-key ../my-repo/.circleci
 
 Then command will return the two environment variables `OPENSSL_KEY` and `OPENSSL_IV` that you will need to set as [project environment variables](https://circleci.com/docs/2.0/env-vars/#setting-an-environment-variable-in-a-project)
 so that CircleCI can decrypt the private key.
+
+### Example
+
+See [example/](example) for an example of a fictitious application that uses this orb.
 
 ## Deploying new versions of the orb
 
