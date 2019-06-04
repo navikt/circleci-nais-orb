@@ -31,12 +31,12 @@ commands:
     steps:
       - run:
           command: |
-            openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in .circleci/di-dep-ci.key.pem.enc -out .circleci/di-dep-ci.key.pem -d
+            openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in .circleci/github.key.pem.enc -out .circleci/github.key.pem -d
             git clone https://github.com/navikt/github-apps-support.git
             export PATH=`pwd`/github-apps-support/bin:$PATH
-            GH_TOKEN=$(generate-installation-token.sh `generate-jwt.sh .circleci/di-dep-ci.key.pem << parameters.app-id >>`)
+            GH_TOKEN=$(generate-installation-token.sh `generate-jwt.sh .circleci/github.key.pem << parameters.app-id >>`)
             echo -e "machine api.github.com login x-access-token password $GH_TOKEN" > ~/.netrc
-            rm .circleci/di-dep-ci.key.pem
+            rm .circleci/github.key.pem
   generate-nais-deployment:
     description: "Generate NAIS Github deployment"
     parameters:
@@ -47,6 +47,8 @@ commands:
       image:
         type: string
       environment:
+        type: string
+      repo:
         type: string
     steps:
       - run:
@@ -63,7 +65,7 @@ commands:
               -X POST \
               -d "$DEPLOYMENT" \
               -H "Accept: application/vnd.github.ant-man-preview+json" \
-              https://api.github.com/repos/navikt/di-dep-schema-viewer/deployments
+              https://api.github.com/repos/<< parameters.repo >>/deployments
 jobs:
   deploy:
     executor: go-executor
@@ -72,6 +74,8 @@ jobs:
         type: boolean
         default: true
         description: Build and push docker image to Docker hub?
+      repo:
+        type: string
       image:
         type: string
       docker-folder:
@@ -98,6 +102,7 @@ jobs:
           app-id: << parameters.github-app-id >>
       - run: go get gopkg.in/mikefarah/yq.v2
       - generate-nais-deployment:
+          repo: << parameters.repo >>
           nais-template: << parameters.nais-template >>
           deployment-template: << parameters.deployment-template >>
           image: << parameters.image >>
@@ -113,6 +118,7 @@ examples:
         deploy-docker-and-nais:
           jobs:
             - nais/deploy:
+                repo: navikt/example-repo
                 image: navikt/example-image
                 github-app-id: 1337
                 nais-template: nais.yaml
@@ -128,6 +134,7 @@ examples:
           jobs:
             - nais/deploy:
                 build-and-push-docker-image: false
+                repo: navikt/example-repo
                 image: navikt/example-image
                 github-app-id: 1337
                 nais-template: nais.yaml
