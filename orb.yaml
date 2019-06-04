@@ -4,7 +4,7 @@ orbs:
 executors:
   go-executor:
     docker:
-      - image: circleci/golang:1.9.7
+      - image: navikt/deployment-cli:907bb2d9d1a744347428079a46226e99e45074a8
 commands:
   docker-deploy:
     description: "Build and push docker image"
@@ -23,49 +23,35 @@ commands:
           image: << parameters.image >>
       - docker/push:
           image: << parameters.image >>
-  login-to-github:
-    description: "Login to Github"
-    parameters:
-      app-id:
-        type: integer
-    steps:
-      - run:
-          command: |
-            openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in .circleci/github.key.pem.enc -out .circleci/github.key.pem -d
-            git clone https://github.com/navikt/github-apps-support.git
-            export PATH=`pwd`/github-apps-support/bin:$PATH
-            GH_TOKEN=$(generate-installation-token.sh `generate-jwt.sh .circleci/github.key.pem << parameters.app-id >>`)
-            echo -e "machine api.github.com login x-access-token password $GH_TOKEN" > ~/.netrc
-            rm .circleci/github.key.pem
   generate-nais-deployment:
     description: "Generate NAIS Github deployment"
     parameters:
       nais-template:
         type: string
-      deployment-template:
-        type: string
+      github-app-id:
+        type: integer
       image:
         type: string
       environment:
         type: string
       repo:
         type: string
+      team:
+        type: string
     steps:
+      - run:
+          name: "Fetch deployment CLI"
+          command: |
+            git clone https://github.com/navikt/deployment-cli
+      - run:
+          name: "Decrypt private key"
+          command: |
+            openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in .circleci/github.key.pem.enc -out .circleci/github.key.pem -d
       - run:
           name: "Create NAIS Github deployment"
           command: |
-            NAISERATOR=$(yq.v2 r << parameters.nais-template >> -j)
-            NAISERATOR=$(echo $NAISERATOR | jq '.spec.image = "<< parameters.image >>:'$CIRCLE_SHA1'"' -c)
-
-            DEPLOYMENT=$(cat << parameters.deployment-template >> | jq '.payload.kubernetes.resources += ['$NAISERATOR']')
-            DEPLOYMENT=$(echo $DEPLOYMENT | jq '.environment = "<< parameters.environment >>"')
-            DEPLOYMENT=$(echo $DEPLOYMENT | jq '.ref = "'$CIRCLE_SHA1'"')
-
-            curl -i -n \
-              -X POST \
-              -d "$DEPLOYMENT" \
-              -H "Accept: application/vnd.github.ant-man-preview+json" \
-              https://api.github.com/repos/<< parameters.repo >>/deployments
+            deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> \
+              --team=<< parameters.team >> --version=<< parameters.image >>:$CIRCLE_SHA1 --key=.circleci/github.key.pem --resource=<< parameters.nais-template >>
 jobs:
   deploy:
     executor: go-executor
@@ -85,9 +71,8 @@ jobs:
         type: integer
       nais-template:
         type: string
-      deployment-template:
+      team:
         type: string
-        default: deployment.json
       environment:
         type: string
     steps:
@@ -98,13 +83,11 @@ jobs:
             - docker-deploy:
                 image: << parameters.image >>
                 folder: << parameters.docker-folder >>
-      - login-to-github:
-          app-id: << parameters.github-app-id >>
-      - run: go get gopkg.in/mikefarah/yq.v2
       - generate-nais-deployment:
           repo: << parameters.repo >>
           nais-template: << parameters.nais-template >>
-          deployment-template: << parameters.deployment-template >>
+          team: << parameters.team >>
+          github-app-id: << parameters.github-app-id >>
           image: << parameters.image >>
           environment: << parameters.environment >>
 examples:
@@ -123,6 +106,7 @@ examples:
                 github-app-id: 1337
                 nais-template: nais.yaml
                 environment: dev-fss
+                team: awesome-team
   deploy-nais-only:
     description: Create NAIS deployment without creating and pushind docker image
     usage:
@@ -139,6 +123,7 @@ examples:
                 github-app-id: 1337
                 nais-template: nais.yaml
                 environment: dev-fss
+                team: awesome-team
   push-docker-image-only:
     description: Create and push docker image without creating NAIS deployment
     usage:

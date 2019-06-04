@@ -7,6 +7,39 @@ building and pushing docker images and creating NAIS deployments.
 
 For general usage examples see the "Usage Examples" section on the [orb registry](https://circleci.com/orbs/registry/orb/navikt/nais-deployment).
 
+### NAIS configuration
+
+Set `image` in your NAIS configuration to `{{version}}` and `team` to `{{team}}`.
+
+Example:
+
+``` yaml
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: example-application
+  namespace: default
+  labels:
+    team: {{team}}
+spec:
+  image: {{version}}
+  port: 8080
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  liveness:
+    path: "/status"
+    port: 8080
+  replicas:
+    min: 1
+    max: 2
+
+```
+
 ### Docker hub authentication
 
 In order for pushing to docker hub to work there are two ways to specify the authentication information.
@@ -28,6 +61,7 @@ workflow:
           github-app-id: 1337
           nais-template: nais.yaml
           environment: dev-fss
+          team: awesome-team
 
 ```
 

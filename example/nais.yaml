@@ -4,9 +4,9 @@ metadata:
   name: your-app-name
   namespace: default
   labels:
-    team: awesome-team
+    team: {{team}}
 spec:
-  image: FROM-CI
+  image: {{version}}
   port: 8080
   resources:
     limits:
