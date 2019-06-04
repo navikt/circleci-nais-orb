@@ -1,0 +1,153 @@
+version: 2.1
+orbs:
+  docker: circleci/docker@0.1.0
+executors:
+  go-executor:
+    docker:
+      - image: circleci/golang:1.9.7
+commands:
+  docker-deploy:
+    description: "Build and push docker image"
+    parameters:
+      image:
+        type: string
+      folder:
+        type: string
+        default: "."
+    steps:
+      - setup_remote_docker
+      - docker/check
+      - docker/build:
+          dockerfile: << parameters.folder >>/Dockerfile
+          path: << parameters.folder >>
+          image: << parameters.image >>
+      - docker/push:
+          image: << parameters.image >>
+  login-to-github:
+    description: "Login to Github"
+    parameters:
+      app-id:
+        type: integer
+    steps:
+      - run:
+          command: |
+            openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in .circleci/di-dep-ci.key.pem.enc -out .circleci/di-dep-ci.key.pem -d
+            git clone https://github.com/navikt/github-apps-support.git
+            export PATH=`pwd`/github-apps-support/bin:$PATH
+            GH_TOKEN=$(generate-installation-token.sh `generate-jwt.sh .circleci/di-dep-ci.key.pem << parameters.app-id >>`)
+            echo -e "machine api.github.com login x-access-token password $GH_TOKEN" > ~/.netrc
+            rm .circleci/di-dep-ci.key.pem
+  generate-nais-deployment:
+    description: "Generate NAIS Github deployment"
+    parameters:
+      nais-template:
+        type: string
+      deployment-template:
+        type: string
+      image:
+        type: string
+      environment:
+        type: string
+    steps:
+      - run:
+          name: "Create NAIS Github deployment"
+          command: |
+            NAISERATOR=$(yq.v2 r << parameters.nais-template >> -j)
+            NAISERATOR=$(echo $NAISERATOR | jq '.spec.image = "<< parameters.image >>:'$CIRCLE_SHA1'"' -c)
+
+            DEPLOYMENT=$(cat << parameters.deployment-template >> | jq '.payload.kubernetes.resources += ['$NAISERATOR']')
+            DEPLOYMENT=$(echo $DEPLOYMENT | jq '.environment = "<< parameters.environment >>"')
+            DEPLOYMENT=$(echo $DEPLOYMENT | jq '.ref = "'$CIRCLE_SHA1'"')
+
+            curl -i -n \
+              -X POST \
+              -d "$DEPLOYMENT" \
+              -H "Accept: application/vnd.github.ant-man-preview+json" \
+              https://api.github.com/repos/navikt/di-dep-schema-viewer/deployments
+jobs:
+  deploy:
+    executor: go-executor
+    parameters:
+      build-and-push-docker-image:
+        type: boolean
+        default: true
+        description: Build and push docker image to Docker hub?
+      image:
+        type: string
+      docker-folder:
+        type: string
+        default: "."
+      github-app-id:
+        type: integer
+      nais-template:
+        type: string
+      deployment-template:
+        type: string
+        default: deployment.json
+      environment:
+        type: string
+    steps:
+      - checkout
+      - when:
+          condition: << parameters.build-and-push-docker-image >>
+          steps:
+            - docker-deploy:
+                image: << parameters.image >>
+                folder: << parameters.docker-folder >>
+      - login-to-github:
+          app-id: << parameters.github-app-id >>
+      - run: go get gopkg.in/mikefarah/yq.v2
+      - generate-nais-deployment:
+          nais-template: << parameters.nais-template >>
+          deployment-template: << parameters.deployment-template >>
+          image: << parameters.image >>
+          environment: << parameters.environment >>
+examples:
+  deploy-docker-and-nais:
+    description: Build and push docker image and create NAIS deployment
+    usage:
+      version: 2.1
+      orbs:
+        nais: navikt/nais-deployment:XYZ
+      workflow:
+        deploy-docker-and-nais:
+          jobs:
+            - nais/deploy:
+                image: navikt/example-image
+                github-app-id: 1337
+                nais-template: nais.yaml
+                environment: dev-fss
+  deploy-nais-only:
+    description: Create NAIS deployment without creating and pushind docker image
+    usage:
+      version: 2.1
+      orbs:
+        nais: navikt/nais-deployment:XYZ
+      workflow:
+        deploy-docker-and-nais:
+          jobs:
+            - nais/deploy:
+                build-and-push-docker-image: false
+                image: navikt/example-image
+                github-app-id: 1337
+                nais-template: nais.yaml
+                environment: dev-fss
+  push-docker-image-only:
+    description: Create and push docker image without creating NAIS deployment
+    usage:
+      version: 2.1
+      orbs:
+        nais: navikt/nais-deployment:XYZ
+      jobs:
+        build:
+          docker:
+            - image: circleci/openjdk:8-jdk
+          steps:
+            - checkout
+            - run: some-custom-command?
+            - nais/docker-deploy:
+                image: navikt/example-image
+      workflow:
+        build-and-push-docker:
+          jobs:
+            - build
