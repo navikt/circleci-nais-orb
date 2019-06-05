@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  orb-tools: circleci/orb-tools@2.0.0
+  orb-tools: circleci/orb-tools@8.14.0
 workflows:
   deploy:
     jobs:
@@ -8,7 +8,7 @@ workflows:
           name: publish-dev
           orb-path: orb.yaml
           orb-ref: navikt/nais-deployment@dev:${CIRCLE_BRANCH}
-          publish-token-variable: $ORB_PUBLISHING_TOKEN
+          publish-token-variable: ORB_PUBLISHING_TOKEN
           validate: true
           filters:
             tags:
@@ -17,7 +17,7 @@ workflows:
           name: publish-prod
           orb-path: orb.yaml
           orb-ref: navikt/nais-deployment@${CIRCLE_TAG}
-          publish-token-variable: $ORB_PUBLISHING_TOKEN
+          publish-token-variable: ORB_PUBLISHING_TOKEN
           validate: true
           filters:
             branches:
