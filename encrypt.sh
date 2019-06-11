@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 [[ -z "$1" || -z "$2" ]] && echo "Usage: ./encrypt.sh path-to-key-file path-to-circleci-folder" && exit
 
