@@ -23,6 +23,29 @@ commands:
           image: << parameters.image >>
       - docker/push:
           image: << parameters.image >>
+  decrypt-private-key:
+    description: "Decrypt private key"
+    steps:
+      - run:
+          name: "Decrypt private key"
+          command: |
+            openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in .circleci/github.key.pem.enc -out .circleci/github.key.pem -d
+  login-to-github:
+    description: "Login to Github"
+    parameters:
+      github-app-id:
+        type: integer
+    steps:
+      - decrypt-private-key
+      - run:
+          command: |
+            git clone https://github.com/navikt/github-apps-support.git
+            export PATH=`pwd`/github-apps-support/bin:$PATH
+            GH_TOKEN=$(generate-installation-token.sh `generate-jwt.sh .circleci/github.key.pem << parameters.github-app-id >>`)
+            echo "export GH_TOKEN=$GH_TOKEN" >> $BASH_ENV
+            source $BASH_ENV
+            echo -e "machine api.github.com login x-access-token password $GH_TOKEN" >> ~/.netrc
+            rm .circleci/github.key.pem
   generate-nais-deployment:
     description: "Generate NAIS Github deployment"
     parameters:
@@ -43,15 +66,13 @@ commands:
           name: "Fetch deployment CLI"
           command: |
             git clone https://github.com/navikt/deployment-cli
-      - run:
-          name: "Decrypt private key"
-          command: |
-            openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in .circleci/github.key.pem.enc -out .circleci/github.key.pem -d
+      - decrypt-private-key
       - run:
           name: "Create NAIS Github deployment"
           command: |
             deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> \
               --team=<< parameters.team >> --version=<< parameters.image >>:$CIRCLE_SHA1 --key=.circleci/github.key.pem --resource=<< parameters.nais-template >>
+            rm .circleci/github.key.pem
 jobs:
   deploy:
     executor: go-executor
