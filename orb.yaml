@@ -1,4 +1,6 @@
 version: 2.1
+description: |
+  Easily deploy to nais.io platform. See https://github.com/navikt/circleci-nais-orb.
 orbs:
   docker: circleci/docker@0.5.0
 executors:
