@@ -27,6 +27,7 @@ commands:
           dockerfile: << parameters.folder >>/Dockerfile
           path: << parameters.folder >>
           image: << parameters.image >>
+          registry: << parameters.registry >>
       - docker/push:
           image: << parameters.image >>
           registry: << parameters.registry >>
