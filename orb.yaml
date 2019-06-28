@@ -21,7 +21,8 @@ commands:
         default: "docker.io"
     steps:
       - setup_remote_docker
-      - docker/check
+      - docker/check:
+          registry: << parameters.registry >>
       - docker/build:
           dockerfile: << parameters.folder >>/Dockerfile
           path: << parameters.folder >>
