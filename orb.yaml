@@ -103,6 +103,9 @@ jobs:
         type: string
       environment:
         type: string
+      registry:
+        type: string
+        default: "docker.io"
     steps:
       - checkout
       - when:
@@ -111,6 +114,7 @@ jobs:
             - docker-deploy:
                 image: << parameters.image >>
                 folder: << parameters.docker-folder >>
+                registry: << parameters.registry >>
       - generate-nais-deployment:
           repo: << parameters.repo >>
           nais-template: << parameters.nais-template >>
