@@ -16,6 +16,9 @@ commands:
       folder:
         type: string
         default: "."
+      registry:
+        type: string
+        default: "docker.io"
     steps:
       - setup_remote_docker
       - docker/check
@@ -25,6 +28,7 @@ commands:
           image: << parameters.image >>
       - docker/push:
           image: << parameters.image >>
+          registry: << parameters.registry >>
   decrypt-private-key:
     description: "Decrypt private key"
     steps:
