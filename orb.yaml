@@ -2,7 +2,7 @@ version: 2.1
 description: |
   Easily deploy to nais.io platform. See https://github.com/navikt/circleci-nais-orb.
 orbs:
-  docker: circleci/docker@0.5.0
+  docker: circleci/docker@0.5.1
 executors:
   go-executor:
     docker:
@@ -16,15 +16,21 @@ commands:
       folder:
         type: string
         default: "."
+      registry:
+        type: string
+        default: "docker.io"
     steps:
       - setup_remote_docker
-      - docker/check
+      - docker/check:
+          registry: << parameters.registry >>
       - docker/build:
           dockerfile: << parameters.folder >>/Dockerfile
           path: << parameters.folder >>
           image: << parameters.image >>
+          registry: << parameters.registry >>
       - docker/push:
           image: << parameters.image >>
+          registry: << parameters.registry >>
   decrypt-private-key:
     description: "Decrypt private key"
     steps:
@@ -98,6 +104,9 @@ jobs:
         type: string
       environment:
         type: string
+      registry:
+        type: string
+        default: "docker.io"
     steps:
       - checkout
       - when:
@@ -106,6 +115,7 @@ jobs:
             - docker-deploy:
                 image: << parameters.image >>
                 folder: << parameters.docker-folder >>
+                registry: << parameters.registry >>
       - generate-nais-deployment:
           repo: << parameters.repo >>
           nais-template: << parameters.nais-template >>
