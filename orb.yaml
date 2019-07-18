@@ -69,6 +69,9 @@ commands:
         type: string
       team:
         type: string
+      await:
+        type: integer
+        default: 300
     steps:
       - run:
           name: "Fetch deployment CLI"
@@ -79,7 +82,7 @@ commands:
           name: "Create NAIS Github deployment"
           command: |
             deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> \
-              --team=<< parameters.team >> --version=<< parameters.image >>:$CIRCLE_SHA1 --key=.circleci/github.key.pem --resource=<< parameters.nais-template >>
+              --team=<< parameters.team >> --version=<< parameters.image >>:$CIRCLE_SHA1 --key=.circleci/github.key.pem --resource=<< parameters.nais-template >> --await=<< parameters.await >>
             rm .circleci/github.key.pem
 jobs:
   deploy:
@@ -102,6 +105,9 @@ jobs:
         type: string
       team:
         type: string
+      await:
+        type: integer
+        default: 300
       environment:
         type: string
       registry:
@@ -123,6 +129,7 @@ jobs:
           github-app-id: << parameters.github-app-id >>
           image: << parameters.image >>
           environment: << parameters.environment >>
+          await: << parameters.await >>
 examples:
   deploy-docker-and-nais:
     description: Build and push docker image and create NAIS deployment
