@@ -64,7 +64,7 @@ commands:
         default: false
       template-vars:
         type: string
-        default: ""
+        default: "/tmp/vars.json"
       github-app-id:
         type: integer
       image:
