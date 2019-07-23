@@ -59,9 +59,12 @@ commands:
     parameters:
       nais-template:
         type: string
+      enable-vars:
+        type: boolean
+        default: false
       template-vars:
         type: string
-        default: /tmp/vars.json
+        default: ""
       github-app-id:
         type: integer
       image:
@@ -82,7 +85,7 @@ commands:
             git clone https://github.com/navikt/deployment-cli
       - decrypt-private-key
       - unless:
-          condition: << parameters.template-vars >>
+          condition: << parameters.enable-vars >>
           steps:
             - run: echo "{}" > << parameters.template-vars >>
       - run:
@@ -190,3 +193,23 @@ examples:
         build-and-push-docker:
           jobs:
             - build
+  deploy-nais-only-with-vars:
+    description: Create NAIS deployment templated with vars from vars.json
+    usage:
+      version: 2.1
+      orbs:
+        nais: navikt/nais-deployment:XYZ
+      workflow:
+        deploy-docker-and-nais:
+          jobs:
+            - nais/deploy:
+                build-and-push-docker-image: false
+                repo: navikt/example-repo
+                image: navikt/example-image
+                github-app-id: 1337
+                nais-template: nais.yaml
+                environment: dev-fss
+                team: awesome-team
+                enable-vars: true
+                template-vars: vars.json
+
