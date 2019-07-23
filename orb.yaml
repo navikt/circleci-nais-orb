@@ -113,6 +113,12 @@ jobs:
         type: integer
       nais-template:
         type: string
+      enable-vars:
+        type: boolean
+        default: false
+      template-vars:
+        type: string
+        default: "/tmp/vars.json"
       team:
         type: string
       await:
