@@ -81,7 +81,7 @@ commands:
       - run:
           name: "Create NAIS Github deployment"
           command: |
-            deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> \
+            deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> --ref=$CIRCLE_SHA1 \
               --team=<< parameters.team >> --version=<< parameters.image >>:$CIRCLE_SHA1 --key=.circleci/github.key.pem --resource=<< parameters.nais-template >> --await=<< parameters.await >>
             rm .circleci/github.key.pem
 jobs:
