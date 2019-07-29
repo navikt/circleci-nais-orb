@@ -6,7 +6,7 @@ orbs:
 executors:
   go-executor:
     docker:
-      - image: navikt/deployment-cli:907bb2d9d1a744347428079a46226e99e45074a8
+      - image: navikt/deployment-cli:v0.2.0
 commands:
   docker-deploy:
     description: "Build and push docker image"
@@ -79,10 +79,6 @@ commands:
         type: integer
         default: 300
     steps:
-      - run:
-          name: "Fetch deployment CLI"
-          command: |
-            git clone https://github.com/navikt/deployment-cli
       - decrypt-private-key
       - unless:
           condition: << parameters.enable-vars >>
@@ -92,7 +88,7 @@ commands:
           name: "Create NAIS Github deployment"
           command: |
             deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> \
-              --team=<< parameters.team >> --version=<< parameters.image >>:$CIRCLE_SHA1 --key=.circleci/github.key.pem --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
+              --team=<< parameters.team >> --var version=<< parameters.image >>:$CIRCLE_SHA1 --key=.circleci/github.key.pem --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
             rm .circleci/github.key.pem
 jobs:
   deploy:
