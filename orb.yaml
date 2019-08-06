@@ -142,6 +142,8 @@ jobs:
           image: << parameters.image >>
           environment: << parameters.environment >>
           await: << parameters.await >>
+          enable-vars: << parameters.enable-vars >>
+          template-vars: << parameters.template-vars >>
 examples:
   deploy-docker-and-nais:
     description: Build and push docker image and create NAIS deployment
@@ -214,4 +216,3 @@ examples:
                 team: awesome-team
                 enable-vars: true
                 template-vars: vars.json
-
