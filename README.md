@@ -51,7 +51,7 @@ For example:
 version: 2.1
 orbs:
   nais: 'navikt/nais-deployment:XYZ'
-workflow:
+workflows:
   deploy-docker-and-nais:
     jobs:
       - nais/deploy:
