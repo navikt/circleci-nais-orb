@@ -72,7 +72,7 @@ commands:
             source $BASH_ENV
             echo -e "machine api.github.com login x-access-token password $GH_TOKEN" >> ~/.netrc
             rm .circleci/github.key.pem
-  deploy-with-gai:
+  deploy-with-gh-app:
     description: "NAIS Github Deployment with Github App ID"
     parameters:
       nais-template:
@@ -111,7 +111,7 @@ commands:
             deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> \
               --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --key=.circleci/github.key.pem --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
             rm .circleci/github.key.pem
-  deploy-with-pat:
+  deploy-with-personal-token:
     description: "NAIS Github Deployment with Personal Access Token"
     parameters:
       nais-template:
@@ -153,7 +153,7 @@ commands:
           command: |
             deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --username=<< parameters.username >> --password=<< parameters.password >> --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
 jobs:
-  deploy-gai:
+  deploy-gh-app:
     executor: deployment-cli
     parameters:
       build-and-push-docker-image:
@@ -204,7 +204,7 @@ jobs:
                 image: << parameters.image >>
                 tag: << parameters.tag >>
                 registry: << parameters.registry >>
-      - deploy-with-gai:
+      - deploy-with-gh-app:
           repo: << parameters.repo >>
           nais-template: << parameters.nais-template >>
           team: << parameters.team >>
@@ -225,7 +225,7 @@ examples:
       workflows:
         deploy-docker-and-nais:
           jobs:
-            - nais/deploy-gai:
+            - nais/deploy-gh-app:
                 repo: navikt/example-repo
                 image: navikt/example-image
                 github-app-id: 1337
@@ -241,7 +241,7 @@ examples:
       workflows:
         deploy-docker-and-nais:
           jobs:
-            - nais/deploy-gai:
+            - nais/deploy-gh-app:
                 build-and-push-docker-image: false
                 repo: navikt/example-repo
                 image: navikt/example-image
@@ -279,7 +279,7 @@ examples:
       workflows:
         deploy-docker-and-nais:
           jobs:
-            - nais/deploy-gai:
+            - nais/deploy-gh-app:
                 build-and-push-docker-image: false
                 repo: navikt/example-repo
                 image: navikt/example-image
