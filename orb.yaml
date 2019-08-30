@@ -276,9 +276,9 @@ examples:
       version: 2.1
       orbs:
         nais: navikt/nais-deployment:XYZ
-      jobs:
-        deploy:
-          steps:
+      workflows:
+        deploy-with-personal-token:
+          jobs:
             - deploy-personal-token:
                 password: $GITHUB_ACCESS_TOKEN # this is default value too
                 repo: navikt/example-repo
