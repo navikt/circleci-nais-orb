@@ -4,7 +4,7 @@ description: |
 orbs:
   docker: circleci/docker@0.5.1
 executors:
-  go-executor:
+  deployment-cli:
     docker:
       - image: navikt/deployment-cli:v0.2.0
 commands:
@@ -154,7 +154,7 @@ commands:
             deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --username=<< parameters.username >> --password=<< parameters.password >> --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
 jobs:
   deploy:
-    executor: go-executor
+    executor: deployment-cli
     parameters:
       build-and-push-docker-image:
         type: boolean
