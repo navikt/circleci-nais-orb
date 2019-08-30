@@ -270,6 +270,25 @@ examples:
         build-and-push-docker:
           jobs:
             - build-and-push
+  only-build-docker:
+    description: Build Docker image without pushing image or creating a NAIS deployment
+    usage:
+      version: 2.1
+      orbs:
+        nais: navikt/nais-deployment:XYZ
+      jobs:
+        build:
+          docker:
+            - image: circleci/openjdk:8-jdk
+          steps:
+            - checkout
+            - run: some-custom-command?
+            - nais/docker-build:
+                image: navikt/example-image
+      workflows:
+        build-docker:
+          jobs:
+            - build
   personal-token-deploy:
     description: Create NAIS deployment with personal access token
     usage:
