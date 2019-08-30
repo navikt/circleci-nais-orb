@@ -153,13 +153,13 @@ commands:
           command: |
             deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --username=<< parameters.username >> --password=<< parameters.password >> --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
 jobs:
-  deploy:
+  deploy-gai:
     executor: deployment-cli
     parameters:
       build-and-push-docker-image:
         type: boolean
         default: true
-        description: Build and push docker image to Docker hub?
+        description: Build and push Docker image to Docker registry
       repo:
         type: string
       image:
@@ -200,7 +200,7 @@ jobs:
                 tag: << parameters.tag >>
                 folder: << parameters.docker-folder >>
                 registry: << parameters.registry >>
-      - generate-nais-deployment:
+      - deploy-with-gai:
           repo: << parameters.repo >>
           nais-template: << parameters.nais-template >>
           team: << parameters.team >>
@@ -221,7 +221,7 @@ examples:
       workflows:
         deploy-docker-and-nais:
           jobs:
-            - nais/deploy:
+            - nais/deploy-gai:
                 repo: navikt/example-repo
                 image: navikt/example-image
                 github-app-id: 1337
@@ -237,7 +237,7 @@ examples:
       workflows:
         deploy-docker-and-nais:
           jobs:
-            - nais/deploy:
+            - nais/deploy-gai:
                 build-and-push-docker-image: false
                 repo: navikt/example-repo
                 image: navikt/example-image
@@ -245,25 +245,27 @@ examples:
                 nais-template: nais.yaml
                 environment: dev-fss
                 team: awesome-team
-  push-docker-image-only:
-    description: Create and push docker image without creating NAIS deployment
+  build-push-docker:
+    description: Build and push Docker image without creating NAIS deployment
     usage:
       version: 2.1
       orbs:
         nais: navikt/nais-deployment:XYZ
       jobs:
-        build:
+        build-and-push:
           docker:
             - image: circleci/openjdk:8-jdk
           steps:
             - checkout
             - run: some-custom-command?
-            - nais/docker-deploy:
+            - nais/docker-build:
+                image: navikt/example-image
+            - nais/docker-push:
                 image: navikt/example-image
       workflows:
         build-and-push-docker:
           jobs:
-            - build
+            - build-and-push
   deploy-nais-only-with-vars:
     description: Create NAIS deployment templated with vars from vars.json
     usage:
@@ -273,7 +275,7 @@ examples:
       workflows:
         deploy-docker-and-nais:
           jobs:
-            - nais/deploy:
+            - nais/deploy-gai:
                 build-and-push-docker-image: false
                 repo: navikt/example-repo
                 image: navikt/example-image
