@@ -195,7 +195,12 @@ jobs:
       - when:
           condition: << parameters.build-and-push-docker-image >>
           steps:
-            - docker-deploy:
+            - docker-build:
+                image: << parameters.image >>
+                tag: << parameters.tag >>
+                folder: << parameters.docker-folder >>
+                registry: << parameters.registry >>
+            - docker-push:
                 image: << parameters.image >>
                 tag: << parameters.tag >>
                 folder: << parameters.docker-folder >>
