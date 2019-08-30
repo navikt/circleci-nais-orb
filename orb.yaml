@@ -8,8 +8,8 @@ executors:
     docker:
       - image: navikt/deployment-cli:v0.2.0
 commands:
-  docker-deploy:
-    description: "Build and push docker image"
+  docker-build:
+    description: "Build docker image"
     parameters:
       image:
         type: string
@@ -32,6 +32,19 @@ commands:
           image: << parameters.image >>
           tag: << parameters.tag >>
           registry: << parameters.registry >>
+  docker-push:
+    description: "Push docker image"
+    parameters:
+      image:
+        type: string
+      tag:
+        type: string
+        default: $CIRCLE_SHA1
+      registry:
+        type: string
+        default: "docker.io"
+    steps:
+      - setup_remote_docker
       - docker/push:
           image: << parameters.image >>
           tag: << parameters.tag >>
