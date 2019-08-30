@@ -203,7 +203,6 @@ jobs:
             - docker-push:
                 image: << parameters.image >>
                 tag: << parameters.tag >>
-                folder: << parameters.docker-folder >>
                 registry: << parameters.registry >>
       - deploy-with-gai:
           repo: << parameters.repo >>
