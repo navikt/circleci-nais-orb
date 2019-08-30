@@ -276,10 +276,12 @@ examples:
       version: 2.1
       orbs:
         nais: navikt/nais-deployment:XYZ
-      workflows:
+      jobs:
         deploy-with-personal-token:
-          jobs:
-            - deploy-personal-token:
+          docker:
+            - image: navikt/deployment-cli:v0.2.0
+          steps:
+            - nais/deploy-personal-token:
                 password: $GITHUB_ACCESS_TOKEN # this is default value too
                 repo: navikt/example-repo
                 image: navikt/example-image
@@ -287,9 +289,9 @@ examples:
                 nais-template: nais.yaml
                 environment: dev-fss
       workflows:
-        build-and-push-docker:
+        deploy:
           jobs:
-            - build-and-push
+            - deploy-with-personal-token
   deploy-nais-only-with-vars:
     description: Create NAIS deployment templated with vars from vars.json
     usage:
