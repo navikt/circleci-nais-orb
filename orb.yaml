@@ -72,8 +72,8 @@ commands:
             source $BASH_ENV
             echo -e "machine api.github.com login x-access-token password $GH_TOKEN" >> ~/.netrc
             rm .circleci/github.key.pem
-  generate-nais-deployment:
-    description: "Generate NAIS Github deployment"
+  deploy-with-gai:
+    description: "NAIS Github Deployment with Github App ID"
     parameters:
       nais-template:
         type: string
