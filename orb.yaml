@@ -111,6 +111,47 @@ commands:
             deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> \
               --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --key=.circleci/github.key.pem --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
             rm .circleci/github.key.pem
+  deploy-with-pat:
+    description: "NAIS Github Deployment with Personal Access Token"
+    parameters:
+      nais-template:
+        type: string
+      enable-vars:
+        type: boolean
+        default: false
+      template-vars:
+        type: string
+        default: "/tmp/vars.json"
+      username:
+        type: string
+        default: "x-access-token"
+      password:
+        type: string
+        default: $GITHUB_ACCESS_TOKEN
+      image:
+        type: string
+      tag:
+        type: string
+        default: $CIRCLE_SHA1
+      environment:
+        type: string
+      repo:
+        type: string
+      team:
+        type: string
+      await:
+        type: integer
+        default: 300
+    steps:
+      - decrypt-private-key
+      - unless:
+          condition: << parameters.enable-vars >>
+          steps:
+            - run: echo "{}" > << parameters.template-vars >>
+      - run:
+          name: "Create NAIS Github deployment"
+          command: |
+            deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --username=<< parameters.username >> --password=<< parameters.password >> --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
 jobs:
   deploy:
     executor: go-executor
