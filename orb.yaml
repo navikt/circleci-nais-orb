@@ -270,6 +270,26 @@ examples:
         build-and-push-docker:
           jobs:
             - build-and-push
+  personal-token-deploy:
+    description: Create NAIS deployment with personal access token
+    usage:
+      version: 2.1
+      orbs:
+        nais: navikt/nais-deployment:XYZ
+      jobs:
+        deploy:
+          steps:
+            - deploy-personal-token:
+                password: $GITHUB_ACCESS_TOKEN # this is default value too
+                repo: navikt/example-repo
+                image: navikt/example-image
+                team: awesome-team
+                nais-template: nais.yaml
+                environment: dev-fss
+      workflows:
+        build-and-push-docker:
+          jobs:
+            - build-and-push
   deploy-nais-only-with-vars:
     description: Create NAIS deployment templated with vars from vars.json
     usage:
