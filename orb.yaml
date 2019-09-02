@@ -8,7 +8,7 @@ executors:
     docker:
       - image: navikt/deployment-cli:v0.2.0
 commands:
-  docker-build:
+  docker:
     description: "Build docker image"
     parameters:
       image:
@@ -22,6 +22,9 @@ commands:
       registry:
         type: string
         default: "docker.io"
+      build-only:
+        type: boolean
+        default: false
     steps:
       - setup_remote_docker
       - docker/check:
@@ -32,23 +35,13 @@ commands:
           image: << parameters.image >>
           tag: << parameters.tag >>
           registry: << parameters.registry >>
-  docker-push:
-    description: "Push docker image"
-    parameters:
-      image:
-        type: string
-      tag:
-        type: string
-        default: $CIRCLE_SHA1
-      registry:
-        type: string
-        default: "docker.io"
-    steps:
-      - setup_remote_docker
-      - docker/push:
-          image: << parameters.image >>
-          tag: << parameters.tag >>
-          registry: << parameters.registry >>
+      - unless:
+          condition: << parameters.build-only >>
+          steps:
+            - docker/push:
+                image: << parameters.image >>
+                tag: << parameters.tag >>
+                registry: << parameters.registry >>
   decrypt-private-key:
     description: "Decrypt private key"
     steps:
@@ -165,7 +158,7 @@ jobs:
       build-and-push-docker-image:
         type: boolean
         default: true
-        description: Build and push Docker image to Docker registry
+        description: Build and push Docker image
       repo:
         type: string
       image:
@@ -201,14 +194,10 @@ jobs:
       - when:
           condition: << parameters.build-and-push-docker-image >>
           steps:
-            - docker-build:
+            - docker:
                 image: << parameters.image >>
                 tag: << parameters.tag >>
                 folder: << parameters.docker-folder >>
-                registry: << parameters.registry >>
-            - docker-push:
-                image: << parameters.image >>
-                tag: << parameters.tag >>
                 registry: << parameters.registry >>
       - deploy-with-gh-app:
           repo: << parameters.repo >>
@@ -268,9 +257,7 @@ examples:
           steps:
             - checkout
             - run: some-custom-command?
-            - nais/docker-build:
-                image: navikt/example-image
-            - nais/docker-push:
+            - nais/docker:
                 image: navikt/example-image
       workflows:
         build-and-push-docker:
@@ -289,8 +276,9 @@ examples:
           steps:
             - checkout
             - run: some-custom-command?
-            - nais/docker-build:
+            - nais/docker:
                 image: navikt/example-image
+                build-only: true
       workflows:
         build-docker:
           jobs:
