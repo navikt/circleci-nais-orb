@@ -108,7 +108,7 @@ commands:
       - run:
           name: "Create NAIS Github deployment"
           command: |
-            deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> \
+            deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --ref=$CIRCLE_SHA1 --appid=<< parameters.github-app-id >> \
               --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --key=.circleci/github.key.pem --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
             rm .circleci/github.key.pem
   deploy-with-personal-token:
@@ -151,7 +151,7 @@ commands:
       - run:
           name: "Create NAIS Github deployment"
           command: |
-            deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --username=<< parameters.username >> --password=<< parameters.password >> --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
+            deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --ref=$CIRCLE_SHA1 --username=<< parameters.username >> --password=<< parameters.password >> --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
 jobs:
   deploy-gh-app:
     executor: deployment-cli
