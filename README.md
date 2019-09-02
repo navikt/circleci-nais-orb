@@ -69,7 +69,11 @@ If you need to deploy to other Docker hub organisations you need to set the [pro
 `DOCKER_LOGIN` and `DOCKER_PASSWORD`.
 
 ### Github deployment authentication
+#### Developer token
+Set the environment variable `GITHUB_ACCESS_TOKEN` to your personal access token. *DO NOT ENTER YOUR GITHUB PASSWORD HERE*.
 
+
+#### Github App
 You should start out by reading the [Github deployment documentation](https://github.com/navikt/deployment) and follow the steps specified there.
 
 Once you have an `RSA Private Key` for a Github application that has the rights to create deployments in your Github repo you need to encrypt it and store it in the repository in question:
