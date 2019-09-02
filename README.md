@@ -54,7 +54,7 @@ orbs:
 workflows:
   deploy-docker-and-nais:
     jobs:
-      - nais/deploy:
+      - nais/deploy-with-gh-app:
           context: NAIS deployment
           repo: navikt/example-repo
           image: navikt/example-image

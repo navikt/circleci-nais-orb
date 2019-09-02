@@ -4,12 +4,12 @@ description: |
 orbs:
   docker: circleci/docker@0.5.1
 executors:
-  go-executor:
+  deployment-cli:
     docker:
       - image: navikt/deployment-cli:v0.2.0
 commands:
-  docker-deploy:
-    description: "Build and push docker image"
+  docker-build:
+    description: "Build docker image"
     parameters:
       image:
         type: string
@@ -32,6 +32,19 @@ commands:
           image: << parameters.image >>
           tag: << parameters.tag >>
           registry: << parameters.registry >>
+  docker-push:
+    description: "Push docker image"
+    parameters:
+      image:
+        type: string
+      tag:
+        type: string
+        default: $CIRCLE_SHA1
+      registry:
+        type: string
+        default: "docker.io"
+    steps:
+      - setup_remote_docker
       - docker/push:
           image: << parameters.image >>
           tag: << parameters.tag >>
@@ -59,8 +72,8 @@ commands:
             source $BASH_ENV
             echo -e "machine api.github.com login x-access-token password $GH_TOKEN" >> ~/.netrc
             rm .circleci/github.key.pem
-  generate-nais-deployment:
-    description: "Generate NAIS Github deployment"
+  deploy-with-gh-app:
+    description: "NAIS Github Deployment with Github App ID"
     parameters:
       nais-template:
         type: string
@@ -98,14 +111,55 @@ commands:
             deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --appid=<< parameters.github-app-id >> \
               --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --key=.circleci/github.key.pem --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
             rm .circleci/github.key.pem
+  deploy-with-personal-token:
+    description: "NAIS Github Deployment with Personal Access Token"
+    parameters:
+      nais-template:
+        type: string
+      enable-vars:
+        type: boolean
+        default: false
+      template-vars:
+        type: string
+        default: "/tmp/vars.json"
+      username:
+        type: string
+        default: "x-access-token"
+      password:
+        type: string
+        default: $GITHUB_ACCESS_TOKEN
+      image:
+        type: string
+      tag:
+        type: string
+        default: $CIRCLE_SHA1
+      environment:
+        type: string
+      repo:
+        type: string
+      team:
+        type: string
+      await:
+        type: integer
+        default: 300
+    steps:
+      - decrypt-private-key
+      - unless:
+          condition: << parameters.enable-vars >>
+          steps:
+            - run: echo "{}" > << parameters.template-vars >>
+      - run:
+          name: "Create NAIS Github deployment"
+          command: |
+            deployment-cli deploy create --cluster=<< parameters.environment >> --repository=<< parameters.repo >> --username=<< parameters.username >> --password=<< parameters.password >> --team=<< parameters.team >> --var version=<< parameters.image >>:<< parameters.tag >> --resource=<< parameters.nais-template >> --await=<< parameters.await >> --vars=<< parameters.template-vars >>
 jobs:
-  deploy:
-    executor: go-executor
+  deploy-gh-app:
+    executor: deployment-cli
     parameters:
       build-and-push-docker-image:
         type: boolean
         default: true
-        description: Build and push docker image to Docker hub?
+        description: Build and push Docker image to Docker registry
       repo:
         type: string
       image:
@@ -141,12 +195,16 @@ jobs:
       - when:
           condition: << parameters.build-and-push-docker-image >>
           steps:
-            - docker-deploy:
+            - docker-build:
                 image: << parameters.image >>
                 tag: << parameters.tag >>
                 folder: << parameters.docker-folder >>
                 registry: << parameters.registry >>
-      - generate-nais-deployment:
+            - docker-push:
+                image: << parameters.image >>
+                tag: << parameters.tag >>
+                registry: << parameters.registry >>
+      - deploy-with-gh-app:
           repo: << parameters.repo >>
           nais-template: << parameters.nais-template >>
           team: << parameters.team >>
@@ -167,7 +225,7 @@ examples:
       workflows:
         deploy-docker-and-nais:
           jobs:
-            - nais/deploy:
+            - nais/deploy-gh-app:
                 repo: navikt/example-repo
                 image: navikt/example-image
                 github-app-id: 1337
@@ -183,7 +241,7 @@ examples:
       workflows:
         deploy-docker-and-nais:
           jobs:
-            - nais/deploy:
+            - nais/deploy-gh-app:
                 build-and-push-docker-image: false
                 repo: navikt/example-repo
                 image: navikt/example-image
@@ -191,8 +249,29 @@ examples:
                 nais-template: nais.yaml
                 environment: dev-fss
                 team: awesome-team
-  push-docker-image-only:
-    description: Create and push docker image without creating NAIS deployment
+  build-push-docker:
+    description: Build and push Docker image without creating NAIS deployment
+    usage:
+      version: 2.1
+      orbs:
+        nais: navikt/nais-deployment:XYZ
+      jobs:
+        build-and-push:
+          docker:
+            - image: circleci/openjdk:8-jdk
+          steps:
+            - checkout
+            - run: some-custom-command?
+            - nais/docker-build:
+                image: navikt/example-image
+            - nais/docker-push:
+                image: navikt/example-image
+      workflows:
+        build-and-push-docker:
+          jobs:
+            - build-and-push
+  only-build-docker:
+    description: Build Docker image without pushing image or creating a NAIS deployment
     usage:
       version: 2.1
       orbs:
@@ -204,12 +283,34 @@ examples:
           steps:
             - checkout
             - run: some-custom-command?
-            - nais/docker-deploy:
+            - nais/docker-build:
                 image: navikt/example-image
       workflows:
-        build-and-push-docker:
+        build-docker:
           jobs:
             - build
+  personal-token-deploy:
+    description: Create NAIS deployment with personal access token
+    usage:
+      version: 2.1
+      orbs:
+        nais: navikt/nais-deployment:XYZ
+      jobs:
+        deploy-with-personal-token:
+          docker:
+            - image: navikt/deployment-cli:v0.2.0
+          steps:
+            - nais/deploy-personal-token:
+                password: $GITHUB_ACCESS_TOKEN # this is default value too
+                repo: navikt/example-repo
+                image: navikt/example-image
+                team: awesome-team
+                nais-template: nais.yaml
+                environment: dev-fss
+      workflows:
+        deploy:
+          jobs:
+            - deploy-with-personal-token
   deploy-nais-only-with-vars:
     description: Create NAIS deployment templated with vars from vars.json
     usage:
@@ -219,7 +320,7 @@ examples:
       workflows:
         deploy-docker-and-nais:
           jobs:
-            - nais/deploy:
+            - nais/deploy-gh-app:
                 build-and-push-docker-image: false
                 repo: navikt/example-repo
                 image: navikt/example-image
