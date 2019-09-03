@@ -209,6 +209,70 @@ jobs:
           await: << parameters.await >>
           enable-vars: << parameters.enable-vars >>
           template-vars: << parameters.template-vars >>
+jobs:
+  deploy-personal-token:
+    executor: deployment-cli
+    parameters:
+      build-and-push-docker-image:
+        type: boolean
+        default: true
+        description: Build and push Docker image
+      repo:
+        type: string
+      image:
+        type: string
+      tag:
+        type: string
+        default: $CIRCLE_SHA1
+      docker-folder:
+        type: string
+        default: "."
+      username:
+        type: string
+        default: "x-access-token"
+      password:
+        type: string
+        default: $GITHUB_ACCESS_TOKEN
+      nais-template:
+        type: string
+      enable-vars:
+        type: boolean
+        default: false
+      template-vars:
+        type: string
+        default: "/tmp/vars.json"
+      team:
+        type: string
+      await:
+        type: integer
+        default: 300
+      environment:
+        type: string
+      registry:
+        type: string
+        default: "docker.io"
+    steps:
+      - checkout
+      - when:
+          condition: << parameters.build-and-push-docker-image >>
+          steps:
+            - docker:
+                image: << parameters.image >>
+                tag: << parameters.tag >>
+                folder: << parameters.docker-folder >>
+                registry: << parameters.registry >>
+      - deploy-with-personal-token:
+          repo: << parameters.repo >>
+          nais-template: << parameters.nais-template >>
+          team: << parameters.team >>
+          username: << parameters.username >>
+          password: << parameters.password >>
+          image: << parameters.image >>
+          tag: << parameters.tag >>
+          environment: << parameters.environment >>
+          await: << parameters.await >>
+          enable-vars: << parameters.enable-vars >>
+          template-vars: << parameters.template-vars >>
 examples:
   deploy-docker-and-nais:
     description: Build and push docker image and create NAIS deployment
