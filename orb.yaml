@@ -209,7 +209,6 @@ jobs:
           await: << parameters.await >>
           enable-vars: << parameters.enable-vars >>
           template-vars: << parameters.template-vars >>
-jobs:
   deploy-personal-token:
     executor: deployment-cli
     parameters:
