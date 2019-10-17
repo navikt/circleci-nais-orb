@@ -46,9 +46,11 @@ commands:
     description: "Decrypt private key"
     steps:
       - run:
-          name: "Decrypt private key"
+          name: "Decrypt private key if exists"
           command: |
-            openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in .circleci/github.key.pem.enc -out .circleci/github.key.pem -d
+            if [ -f .circleci/github.key.pem.enc ]; then
+              openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in .circleci/github.key.pem.enc -out .circleci/github.key.pem -d
+            fi 
   login-to-github:
     description: "Login to Github"
     parameters:
