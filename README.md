@@ -6,8 +6,8 @@ This is a [CircleCI orb](https://circleci.com/orbs/) that helps with building an
 
 ## Documentation and usage
 
-* General deployemnt documentation is over at https://doc.nais.io/deployment, where we also try to collect the complete documentation for the NAIS platform.
-* General usage examples for this orb can be seen in the [orb registry](https://circleci.com/orbs/registry/orb/navikt/nais-deployment) under the "Usage Examples" section.
+* General deployment documentation is over at https://doc.nais.io/deployment, where we also try to collect the complete documentation for the NAIS platform.
+* General usage examples for this particular orb can be seen in the [orb registry](https://circleci.com/orbs/registry/orb/navikt/nais-deployment) under the "Usage Examples" section.
 
 
 ## Deploying new versions of the orb
